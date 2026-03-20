@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Single File URL Shortener</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#111827;
+      --soft:#1f2937;
+      --line:#334155;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#22c55e;
+      --accent2:#3b82f6;
+      --danger:#ef4444;
+      --warn:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:linear-gradient(135deg,#0f172a,#111827,#1e293b);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px;
+    }
+    .card{
+      background:rgba(17,24,39,.92);
+      border:1px solid rgba(148,163,184,.15);
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+      backdrop-filter:blur(10px);
+    }
+    .hero{
+      padding:28px;
+      border-bottom:1px solid rgba(148,163,184,.12);
+      background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(59,130,246,.08));
+    }
+    h1{
+      margin:0 0 10px;
+      font-size:30px;
+      line-height:1.2;
+    }
+    .sub{
+      color:var(--muted);
+      margin:0;
+      font-size:14px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:20px;
+      padding:20px;
+    }
+    .panel{
+      background:rgba(255,255,255,.02);
+      border:1px solid rgba(148,163,184,.1);
+      border-radius:16px;
+      padding:18px;
+    }
+    .panel h2{
+      margin:0 0 14px;
+      font-size:18px;
+    }
+    label{
+      display:block;
+      margin:12px 0 7px;
+      font-size:13px;
+      color:#cbd5e1;
+    }
+    input{
+      width:100%;
+      padding:13px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      outline:none;
+      background:#0b1220;
+      color:var(--text);
+      font-size:14px;
+    }
+    input:focus{
+      border-color:var(--accent2);
+      box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+    .row{
+      display:grid;
+      grid-template-columns:1fr 180px;
+      gap:12px;
+    }
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:16px;
+    }
+    button{
+      border:none;
+      border-radius:12px;
+      padding:12px 16px;
+      font-weight:700;
+      cursor:pointer;
+      color:white;
+      transition:.2s transform,.2s opacity,.2s background;
+    }
+    button:hover{transform:translateY(-1px)}
+    .primary{background:linear-gradient(135deg,var(--accent),#16a34a)}
+    .secondary{background:linear-gradient(135deg,var(--accent2),#2563eb)}
+    .danger{background:linear-gradient(135deg,var(--danger),#dc2626)}
+    .ghost{
+      background:#1e293b;
+      border:1px solid var(--line);
+    }
+    .msg{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:12px;
+      background:#0b1220;
+      border:1px solid var(--line);
+      color:#cbd5e1;
+      font-size:14px;
+      display:none;
+      word-break:break-word;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin-top:14px;
+    }
+    .stat{
+      background:#0b1220;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+    }
+    .stat .k{
+      font-size:22px;
+      font-weight:800;
+      margin-top:4px;
+    }
+    .stat .t{
+      font-size:12px;
+      color:var(--muted);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:14px;
+    }
+    th,td{
+      padding:12px 10px;
+      border-bottom:1px solid rgba(148,163,184,.12);
+      vertical-align:top;
+      text-align:left;
+    }
+    th{
+      color:#cbd5e1;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+    .short-link{
+      color:#93c5fd;
+      text-decoration:none;
+      word-break:break-all;
+    }
+    .long-url{
+      max-width:320px;
+      word-break:break-all;
+      color:#cbd5e1;
+    }
+    .badge{
+      display:inline-block;
+      min-width:34px;
+      text-align:center;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(34,197,94,.12);
+      color:#86efac;
+      font-weight:700;
+      border:1px solid rgba(34,197,94,.25);
+    }
+    .mini-btn{
+      padding:8px 10px;
+      font-size:12px;
+      border-radius:10px;
+      margin-right:6px;
+      margin-bottom:6px;
+    }
+    .empty{
+      color:var(--muted);
+      text-align:center;
+      padding:24px 10px;
+      border:1px dashed rgba(148,163,184,.18);
+      border-radius:14px;
+      margin-top:12px;
+    }
+    .redirect{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .redirect-box{
+      width:min(560px,100%);
+      background:rgba(17,24,39,.94);
+      border:1px solid rgba(148,163,184,.12);
+      border-radius:20px;
+      padding:28px;
+      text-align:center;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .spinner{
+      width:56px;height:56px;border-radius:50%;
+      border:5px solid rgba(255,255,255,.12);
+      border-top-color:var(--accent);
+      margin:0 auto 18px;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .foot{
+      padding:0 20px 20px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+      .stats{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const STORAGE_KEY = "single_file_url_shortener_data_v1";
+
+    function getData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function now() {
+      return new Date().toISOString();
+    }
+
+    function generateCode(length = 6) {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let code = "";
+      for (let i = 0; i < length; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return code;
+    }
+
+    function makeUniqueCode(data, preferred = "") {
+      let code = preferred.trim();
+      if (code) {
+        code = code.replace(/[^a-zA-Z0-9_-]/g, "");
+        if (!code) return null;
+        if (data[code]) return false;
+        return code;
+      }
+      do {
+        code = generateCode(6);
+      } while (data[code]);
+      return code;
+    }
+
+    function normalizeUrl(url) {
+      url = url.trim();
+      if (!url) return "";
+      if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+      try {
+        const u = new URL(url);
+        return u.href;
+      } catch {
+        return "";
+      }
+    }
+
+    function escapeHtml(str = "") {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function shortBase() {
+      return location.origin + location.pathname;
+    }
+
+    function shortUrl(code) {
+      return `${shortBase()}?s=${encodeURIComponent(code)}`;
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      return new Date(value).toLocaleString();
+    }
+
+    function totalLinks(data) {
+      return Object.keys(data).length;
+    }
+
+    function totalVisits(data) {
+      return Object.values(data).reduce((sum, item) => sum + (item.visits || 0), 0);
+    }
+
+    function topCode(data) {
+      const arr = Object.entries(data).sort((a, b) => (b[1].visits || 0) - (a[1].visits || 0));
+      return arr[0]?.[0] || "-";
+    }
+
+    function showMessage(text, ok = true) {
+      const el = document.getElementById("msg");
+      el.style.display = "block";
+      el.style.borderColor = ok ? "rgba(34,197,94,.35)" : "rgba(239,68,68,.35)";
+      el.style.color = ok ? "#bbf7d0" : "#fecaca";
+      el.innerHTML = text;
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showMessage("Copied: " + escapeHtml(text), true);
+      } catch {
+        showMessage("Copy failed. Please copy manually.", false);
+      }
+    }
+
+    function removeCode(code) {
+      const data = getData();
+      delete data[code];
+      saveData(data);
+      renderMain();
+    }
+
+    function clearAll() {
+      if (!confirm("Delete all shortened links?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      renderMain();
+    }
+
+    function createShortLink() {
+      const urlInput = document.getElementById("urlInput");
+      const aliasInput = document.getElementById("aliasInput");
+      const rawUrl = urlInput.value;
+      const normalized = normalizeUrl(rawUrl);
+
+      if (!normalized) {
+        showMessage("Please enter a valid URL.", false);
+        return;
+      }
+
+      const data = getData();
+      const aliasResult = makeUniqueCode(data, aliasInput.value);
+
+      if (aliasResult === false) {
+        showMessage("Custom alias already exists. Try another one.", false);
+        return;
+      }
+      if (aliasResult === null) {
+        showMessage("Alias can only use letters, numbers, _ and -", false);
+        return;
+      }
+
+      const code = aliasResult;
+      data[code] = {
+        url: normalized,
+        visits: 0,
+        createdAt: now(),
+        lastVisited: ""
+      };
+      saveData(data);
+
+      urlInput.value = "";
+      aliasInput.value = "";
+      renderMain();
+      showMessage(`Short link created: <a class="short-link" href="${escapeHtml(shortUrl(code))}" target="_blank">${escapeHtml(shortUrl(code))}</a>`, true);
+    }
+
+    function visitShort(code) {
+      window.open(shortUrl(code), "_blank");
+    }
+
+    function renderTable(data) {
+      const entries = Object.entries(data).sort((a,b)=>new Date(b[1].createdAt) - new Date(a[1].createdAt));
+      if (!entries.length) {
+        return `<div class="empty">No links yet. Create your first short link.</div>`;
+      }
+
+      return `
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Short Link</th>
+                <th>Original URL</th>
+                <th>Visits</th>
+                <th>Last Visit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${entries.map(([code, item]) => `
+                <tr>
+                  <td>
+                    <a class="short-link" href="${escapeHtml(shortUrl(code))}" target="_blank">${escapeHtml(shortUrl(code))}</a>
+                    <div style="margin-top:6px;color:#94a3b8;font-size:12px;">Code: ${escapeHtml(code)}</div>
+                  </td>
+                  <td class="long-url">${escapeHtml(item.url)}</td>
+                  <td><span class="badge">${item.visits || 0}</span></td>
+                  <td>${escapeHtml(formatDate(item.lastVisited))}</td>
+                  <td>
+                    <button class="mini-btn secondary" onclick="copyText('${escapeHtml(shortUrl(code))}')">Copy</button>
+                    <button class="mini-btn ghost" onclick="visitShort('${escapeHtml(code)}')">Open</button>
+                    <button class="mini-btn danger" onclick="removeCode('${escapeHtml(code)}')">Delete</button>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderMain() {
+      const data = getData();
+      document.getElementById("app").innerHTML = `
+        <div class="wrap">
+          <div class="card">
+            <div class="hero">
+              <h1>URL Shortener + Visit Counter</h1>
+              <p class="sub">Single HTML file. Links and visit counts are stored in your browser using localStorage.</p>
+            </div>
+
+            <div class="grid">
+              <div class="panel">
+                <h2>Create Short Link</h2>
+                <label for="urlInput">Long URL</label>
+                <input id="urlInput" type="text" placeholder="https://example.com/very/long/link" />
+
+                <label for="aliasInput">Custom Alias (optional)</label>
+                <div class="row">
+                  <input id="aliasInput" type="text" placeholder="my-link" />
+                  <button class="primary" onclick="createShortLink()">Shorten URL</button>
+                </div>
+
+                <div class="btns">
+                  <button class="ghost" onclick="document.getElementById('urlInput').value=''">Clear Input</button>
+                  <button class="danger" onclick="clearAll()">Delete All</button>
+                </div>
+
+                <div id="msg" class="msg"></div>
+
+                <div class="stats">
+                  <div class="stat">
+                    <div class="t">Total Short Links</div>
+                    <div class="k">${totalLinks(data)}</div>
+                  </div>
+                  <div class="stat">
+                    <div class="t">Total Visits</div>
+                    <div class="k">${totalVisits(data)}</div>
+                  </div>
+                  <div class="stat">
+                    <div class="t">Top Code</div>
+                    <div class="k" style="font-size:18px;word-break:break-all;">${escapeHtml(topCode(data))}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <h2>How It Works</h2>
+                <div style="color:#cbd5e1;line-height:1.8;font-size:14px;">
+                  1. Enter a long URL.<br>
+                  2. Optionally add your own alias.<br>
+                  3. Open the generated short link.<br>
+                  4. Every visit increments the counter automatically.<br><br>
+                  <span style="color:#fbbf24;">Note:</span> Because this is a single HTML file with no backend, data is stored only in this browser.
+                </div>
+              </div>
+            </div>
+
+            <div class="panel" style="margin:0 20px 20px;">
+              <h2>Your Shortened Links</h2>
+              ${renderTable(data)}
+            </div>
+
+            <div class="foot">
+              Works best when hosted as a normal web page, but it can also run locally.
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRedirect(code, item) {
+      document.getElementById("app").innerHTML = `
+        <div class="redirect">
+          <div class="redirect-box">
+            <div class="spinner"></div>
+            <h2 style="margin:0 0 10px;">Redirecting...</h2>
+            <p style="color:#94a3b8;word-break:break-word;margin:0 0 14px;">
+              Short code: <strong>${escapeHtml(code)}</strong>
+            </p>
+            <p style="color:#cbd5e1;word-break:break-word;margin:0 0 18px;">
+              ${escapeHtml(item.url)}
+            </p>
+            <a class="short-link" href="${escapeHtml(item.url)}">Open manually</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderNotFound(code) {
+      document.getElementById("app").innerHTML = `
+        <div class="redirect">
+          <div class="redirect-box">
+            <h2 style="margin-top:0;color:#fca5a5;">Short link not found</h2>
+            <p style="color:#cbd5e1;">Code <strong>${escapeHtml(code)}</strong> does not exist in this browser storage.</p>
+            <button class="secondary" onclick="history.replaceState({},'',location.pathname); renderMain()">Go Home</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleRoute() {
+      const params = new URLSearchParams(location.search);
+      const code = params.get("s");
+
+      if (!code) {
+        renderMain();
+        return;
+      }
+
+      const data = getData();
+      const item = data[code];
+
+      if (!item) {
+        renderNotFound(code);
+        return;
+      }
+
+      item.visits = (item.visits || 0) + 1;
+      item.lastVisited = now();
+      data[code] = item;
+      saveData(data);
+
+      renderRedirect(code, item);
+
+      setTimeout(() => {
+        location.href = item.url;
+      }, 900);
+    }
+
+    window.copyText = copyText;
+    window.removeCode = removeCode;
+    window.visitShort = visitShort;
+    window.createShortLink = createShortLink;
+    window.clearAll = clearAll;
+
+    handleRoute();
+  </script>
+</body>
+</html>
