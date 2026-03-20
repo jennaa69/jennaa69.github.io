@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Video Gallery</title>
+  <style>
+    /* ===================================================
+       RESET & BASE
+    =================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ===================================================
+       HEADER
+    =================================================== */
+    header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(30, 27, 75, 0.4);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: clamp(1.3rem, 3vw, 1.8rem);
+      font-weight: 700;
+      background: linear-gradient(90deg, #a5b4fc, #e0e7ff, #c7d2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    /* Admin badge */
+    #adminBadge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      color: #86efac;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+
+    #adminBadge.visible {
+      display: flex;
+    }
+
+    /* Header right controls */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #adminLoginBtn {
+      background: transparent;
+      border: 1px solid rgba(165, 180, 252, 0.4);
+      color: #c7d2fe;
+      font-size: 0.82rem;
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.2px;
+    }
+
+    #adminLoginBtn:hover {
+      background: rgba(165, 180, 252, 0.15);
+      border-color: #a5b4fc;
+      color: #e0e7ff;
+    }
+
+    #logoutBtn {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 0.82rem;
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #logoutBtn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #f87171;
+      color: #fecaca;
+    }
+
+    #logoutBtn.visible {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ===================================================
+       MAIN LAYOUT
+    =================================================== */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* ===================================================
+       ADD VIDEO SECTION (Admin only)
+    =================================================== */
+    #addVideoSection {
+      display: none;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 36px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+      border: 1px solid #e2e8f0;
+      animation: slideDown 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #addVideoSection.visible {
+      display: block;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #addVideoSection h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #1e1b4b;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #addVideoSection h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, #4f46e5, #818cf8);
+      border-radius: 2px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #videoUrlInput {
+      flex: 1;
+      min-width: 200px;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: #1e293b;
+      background: #f8fafc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    #videoUrlInput::placeholder {
+      color: #94a3b8;
+    }
+
+    #videoUrlInput:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+      background: #fff;
+    }
+
+    #addBtn {
+      padding: 12px 26px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+
+    #addBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+      background: linear-gradient(135deg, #4338ca, #4f46e5);
+    }
+
+    #addBtn:active {
+      transform: translateY(0);
+    }
+
+    /* Error / Success messages */
+    #errorMsg {
+      margin-top: 12px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: none;
+    }
+
+    #errorMsg.show-error {
+      display: block;
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    #errorMsg.show-success {
+      display: block;
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* ===================================================
+       GALLERY SECTION
+    =================================================== */
+    #gallerySection h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #1e1b4b;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #gallerySection h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, #4f46e5, #818cf8);
+      border-radius: 2px;
+    }
+
+    /* Empty state */
+    #emptyState {
+      text-align: center;
+      padding: 80px 20px;
+      color: #94a3b8;
+    }
+
+    #emptyState .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    #emptyState p {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    #emptyState span {
+      font-size: 0.88rem;
+      color: #94a3b8;
+    }
+
+    /* Video grid */
+    #videoGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    /* Responsive grid */
+    @media (max-width: 900px) {
+      #videoGrid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      #videoGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .input-row {
+        flex-direction: column;
+      }
+
+      #addBtn {
+        width: 100%;
+      }
+    }
+
+    /* ===================================================
+       VIDEO CARDS
+    =================================================== */
+    .video-card {
+      background: #ffffff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+      border: 1px solid #e2e8f0;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.25s ease;
+      animation: cardFadeIn 0.4s ease forwards;
+    }
+
+    @keyframes cardFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .video-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Video embed wrapper - 16:9 ratio */
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      background: #0f172a;
+      overflow: hidden;
+    }
+
+    .video-wrapper iframe,
+    .video-wrapper video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Card footer */
+    .card-footer {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .card-url {
+      font-size: 0.78rem;
+      color: #64748b;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    /* Delete button — hidden for public, shown for admin */
+    .delete-btn {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover {
+      background: #fee2e2;
+      transform: scale(1.04);
+    }
+
+    /* When admin is active, show delete buttons */
+    body.admin-mode .delete-btn {
+      display: inline-flex;
+    }
+
+    /* ===================================================
+       ADMIN LOGIN MODAL
+    =================================================== */
+    #modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    #modalOverlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #modalBox {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #modalOverlay.open #modalBox {
+      transform: translateY(0) scale(1);
+    }
+
+    #modalBox h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1e1b4b;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-subtitle {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 26px;
+    }
+
+    #modalBox label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+
+    #passwordInput {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: #1e293b;
+      background: #f8fafc;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 8px;
+    }
+
+    #passwordInput:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+      background: #fff;
+    }
+
+    #passwordInput.shake {
+      animation: shake 0.4s ease;
+      border-color: #dc2626 !important;
+      box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-8px); }
+      40%       { transform: translateX(8px); }
+      60%       { transform: translateX(-6px); }
+      80%       { transform: translateX(6px); }
+    }
+
+    #modalError {
+      font-size: 0.83rem;
+      color: #dc2626;
+      min-height: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    #modalLoginBtn {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+
+    #modalLoginBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+    }
+
+    #modalCancelBtn {
+      padding: 12px 20px;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #modalCancelBtn:hover {
+      background: #e2e8f0;
+    }
+
+    /* ===================================================
+       FOOTER
+    =================================================== */
+    footer {
+      text-align: center;
+      padding: 24px 20px;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    footer a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    /* ===================================================
+       SCROLLBAR
+    =================================================== */
+    ::-webkit-scrollbar { width: 7px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <!-- ===================================================
+       HEADER
+  =================================================== -->
+  <header>
+    <div class="header-left">
+      <h1>🎬 My Video Gallery</h1>
+      <span id="adminBadge">🔐 Admin Mode</span>
+    </div>
+    <div class="header-right">
+      <!-- Admin Login button (shown to public) -->
+      <button id="adminLoginBtn" onclick="openLoginModal()" title="Admin Login">⚙️</button>
+      <!-- Logout button (shown to admin) -->
+      <button id="logoutBtn" onclick="logout()" title="Logout">🚪 Logout</button>
+    </div>
+  </header>
+
+  <!-- ===================================================
+       MAIN CONTENT
+  =================================================== -->
+  <main>
+
+    <!-- ADD VIDEO SECTION — Admin Only -->
+    <section id="addVideoSection" aria-label="Add Video">
+      <h2>Add New Video</h2>
+      <div class="input-row">
+        <input
+          type="url"
+          id="videoUrlInput"
+          placeholder="Paste a YouTube or MP4 video URL…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="addBtn" onclick="addVideo()">➕ Add Video</button>
+      </div>
+      <div id="errorMsg" role="alert"></div>
+    </section>
+
+    <!-- GALLERY SECTION -->
+    <section id="gallerySection" aria-label="Video Gallery">
+      <h2>Video Gallery</h2>
+
+      <!-- Empty state shown when no videos -->
+      <div id="emptyState">
+        <div class="empty-icon">🎥</div>
+        <p>No videos yet</p>
+        <span>Videos added by the admin will appear here.</span>
+      </div>
+
+      <!-- Video grid -->
+      <div id="videoGrid" role="list"></div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================
+       ADMIN LOGIN MODAL
+  =================================================== -->
+  <div id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="handleOverlayClick(event)">
+    <div id="modalBox">
+      <h3 id="modalTitle">🔐 Admin Login</h3>
+      <p class="modal-subtitle">Enter your admin password to manage the gallery.</p>
+
+      <label for="passwordInput">Password</label>
+      <input
+        type="password"
+        id="passwordInput"
+        placeholder="Enter admin password"
+        onkeydown="handlePasswordKeydown(event)"
+        autocomplete="current-password"
+      />
+
+      <div id="modalError" role="alert"></div>
+
+      <div class="modal-actions">
+        <button id="modalLoginBtn" onclick="attemptLogin()">Login</button>
+        <button id="modalCancelBtn" onclick="closeLoginModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================
+       FOOTER
+  =================================================== -->
+  <footer>
+    <p>My Video Gallery &mdash; Videos are stored locally in your browser.</p>
+  </footer>
+
+
+  <!-- ===================================================
+       JAVASCRIPT
+  =================================================== -->
+  <script>
+    /*
+     * =====================================================
+     *  SECURITY NOTE (Production Warning)
+     * =====================================================
+     *  The admin password below is hardcoded in client-side
+     *  JavaScript for DEMO PURPOSES ONLY.
+     *
+     *  ⚠️  In a real production application, authentication
+     *  MUST be handled by a backend server with:
+     *    - Hashed & salted passwords (bcrypt, Argon2, etc.)
+     *    - Secure HTTP-only session cookies or JWT tokens
+     *    - HTTPS transport encryption
+     *    - Rate limiting to prevent brute-force attacks
+     *
+     *  Any client-side password can be viewed by anyone
+     *  who opens the browser's developer tools.
+     * =====================================================
+     */
+
+    /* -----------------------------------------------
+       CONSTANTS & CONFIG
+    ----------------------------------------------- */
+    const ADMIN_PASSWORD  = 'Test@1234';          // Demo password — change in production!
+    const STORAGE_KEY     = 'videoGallery_v2';   // localStorage key for saved videos
+    const SESSION_KEY     = 'videoGallery_admin';// sessionStorage key for admin session
+
+    /* -----------------------------------------------
+       STATE
+    ----------------------------------------------- */
+    let videos = [];         // Array of { id, url, embedUrl, type }
+    let isAdmin = false;     // Current admin status
+
+    /* -----------------------------------------------
+       INIT — Run on page load
+    ----------------------------------------------- */
+    function init() {
+      loadVideos();
+      checkAdminSession();
+    }
+
+    /* -----------------------------------------------
+       LOCAL STORAGE — Save / Load videos
+    ----------------------------------------------- */
+    function saveVideos() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(videos));
+      } catch (e) {
+        console.warn('localStorage unavailable:', e);
+      }
+    }
+
+    function loadVideos() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        videos = stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.warn('Could not load videos from localStorage:', e);
+        videos = [];
+      }
+      renderGallery();
+    }
+
+    /* -----------------------------------------------
+       SESSION STORAGE — Admin session persistence
+    ----------------------------------------------- */
+    function checkAdminSession() {
+      try {
+        const session = sessionStorage.getItem(SESSION_KEY);
+        if (session === 'true') {
+          enableAdminMode(false); // silent — no animation on reload
+        }
+      } catch (e) {
+        // sessionStorage unavailable — fail silently
+      }
+    }
+
+    function saveAdminSession() {
+      try {
+        sessionStorage.setItem(SESSION_KEY, 'true');
+      } catch (e) {}
+    }
+
+    function clearAdminSession() {
+      try {
+        sessionStorage.removeItem(SESSION_KEY);
+      } catch (e) {}
+    }
+
+    /* -----------------------------------------------
+       ADMIN MODE — Enable / Disable
+    ----------------------------------------------- */
+    function enableAdminMode(animate = true) {
+      isAdmin = true;
+      document.body.classList.add('admin-mode');
+
+      // Show admin UI
+      document.getElementById('adminBadge').classList.add('visible');
+      document.getElementById('logoutBtn').classList.add('visible');
+      document.getElementById('adminLoginBtn').style.display = 'none';
+
+      // Show Add Video section
+      const addSection = document.getElementById('addVideoSection');
+      addSection.classList.add('visible');
+      if (!animate) {
+        addSection.style.animation = 'none';
+      }
+
+      saveAdminSession();
+    }
+
+    function disableAdminMode() {
+      isAdmin = false;
+      document.body.classList.remove('admin-mode');
+
+      // Hide admin UI
+      document.getElementById('adminBadge').classList.remove('visible');
+      document.getElementById('logoutBtn').classList.remove('visible');
+      document.getElementById('adminLoginBtn').style.display = '';
+
+      // Hide Add Video section
+      const addSection = document.getElementById('addVideoSection');
+      addSection.classList.remove('visible');
+      addSection.style.animation = '';
+
+      clearAdminSession();
+    }
+
+    /* -----------------------------------------------
+       LOGOUT
+    ----------------------------------------------- */
+    function logout() {
+      disableAdminMode();
+      showMessage('', ''); // clear any existing messages
+    }
+
+    /* -----------------------------------------------
+       MODAL — Open / Close
+    ----------------------------------------------- */
+    function openLoginModal() {
+      const overlay = document.getElementById('modalOverlay');
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('modalError').textContent = '';
+      document.getElementById('passwordInput').classList.remove('shake');
+      overlay.classList.add('open');
+      // Focus the password field after animation
+      setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+    }
+
+    function closeLoginModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('modalError').textContent = '';
+      document.getElementById('passwordInput').classList.remove('shake');
+    }
+
+    // Close modal when clicking the backdrop (outside the box)
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('modalOverlay')) {
+        closeLoginModal();
+      }
+    }
+
+    // Allow pressing Enter in the password field to submit
+    function handlePasswordKeydown(e) {
+      if (e.key === 'Enter') attemptLogin();
+      if (e.key === 'Escape') closeLoginModal();
+    }
+
+    /* -----------------------------------------------
+       AUTHENTICATION — Attempt Login
+    ----------------------------------------------- */
+    function attemptLogin() {
+      const input = document.getElementById('passwordInput');
+      const errorEl = document.getElementById('modalError');
+      const entered = input.value;
+
+      if (!entered.trim()) {
+        errorEl.textContent = '⚠️ Please enter a password.';
+        input.focus();
+        return;
+      }
+
+      if (entered === ADMIN_PASSWORD) {
+        // ✅ Correct password
+        closeLoginModal();
+        enableAdminMode(true);
+      } else {
+        // ❌ Wrong password — shake the input, show error
+        errorEl.textContent = '❌ Incorrect password. Please try again.';
+        input.value = '';
+        input.classList.remove('shake');
+        // Force reflow to restart animation
+        void input.offsetWidth;
+        input.classList.add('shake');
+        // Remove shake class after animation ends
+        setTimeout(() => input.classList.remove('shake'), 450);
+        input.focus();
+      }
+    }
+
+    /* -----------------------------------------------
+       URL UTILITIES
+    ----------------------------------------------- */
+
+    /**
+     * Detect the video type from a URL.
+     * @returns 'youtube' | 'mp4' | 'iframe' | null
+     */
+    function detectVideoType(url) {
+      try {
+        const u = new URL(url);
+        const hostname = u.hostname.toLowerCase().replace('www.', '');
+
+        if (hostname === 'youtube.com' || hostname === 'youtu.be') {
+          return 'youtube';
+        }
+
+        const path = u.pathname.toLowerCase();
+        if (path.endsWith('.mp4') || path.endsWith('.webm') || path.endsWith('.ogg')) {
+          return 'mp4';
+        }
+
+        if (u.protocol === 'https:' || u.protocol === 'http:') {
+          return 'iframe';
+        }
+
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    /**
+     * Convert any recognisable YouTube URL into an embed URL.
+     * Handles:
+     *   - https://www.youtube.com/watch?v=VIDEO_ID
+     *   - https://youtu.be/VIDEO_ID
+     *   - https://www.youtube.com/embed/VIDEO_ID  (already embed)
+     *   - https://www.youtube.com/shorts/VIDEO_ID
+     */
+    function toYouTubeEmbed(url) {
+      try {
+        const u = new URL(url);
+        const hostname = u.hostname.toLowerCase().replace('www.', '');
+        let videoId = null;
+
+        if (hostname === 'youtu.be') {
+          // https://youtu.be/VIDEO_ID
+          videoId = u.pathname.slice(1).split('/')[0].split('?')[0];
+        } else if (hostname === 'youtube.com') {
+          if (u.pathname.startsWith('/watch')) {
+            // https://youtube.com/watch?v=VIDEO_ID
+            videoId = u.searchParams.get('v');
+          } else if (u.pathname.startsWith('/embed/')) {
+            // https://youtube.com/embed/VIDEO_ID  — already an embed link
+            videoId = u.pathname.split('/embed/')[1].split('/')[0].split('?')[0];
+          } else if (u.pathname.startsWith('/shorts/')) {
+            // https://youtube.com/shorts/VIDEO_ID
+            videoId = u.pathname.split('/shorts/')[1].split('/')[0].split('?')[0];
+          }
+        }
+
+        if (videoId && videoId.length > 0) {
+          return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    /**
+     * Validate that a URL is well-formed and uses http(s).
+     */
+    function isValidUrl(url) {
+      try {
+        const u = new URL(url);
+        return u.protocol === 'https:' || u.protocol === 'http:';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /* -----------------------------------------------
+       SECURITY — Escape helpers (prevent XSS)
+    ----------------------------------------------- */
+    function escapeHTML(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeAttr(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    /* -----------------------------------------------
+       UI MESSAGES — Show error / success in the form
+    ----------------------------------------------- */
+    let msgTimer = null;
+
+    function showMessage(msg, type) {
+      const el = document.getElementById('errorMsg');
+      clearTimeout(msgTimer);
+
+      el.textContent = msg;
+      el.className = '';
+
+      if (!msg) return;
+
+      el.classList.add(type === 'success' ? 'show-success' : 'show-error');
+
+      // Auto-dismiss after 5 seconds
+      msgTimer = setTimeout(() => {
+        el.textContent = '';
+        el.className = '';
+      }, 5000);
+    }
+
+    /* -----------------------------------------------
+       ADD VIDEO
+    ----------------------------------------------- */
+    function addVideo() {
+      if (!isAdmin) return; // Extra guard — button should not be visible to public
+
+      const input = document.getElementById('videoUrlInput');
+      const rawUrl = input.value.trim();
+
+      // 1. Empty check
+      if (!rawUrl) {
+        showMessage('⚠️ Please enter a video URL before clicking Add Video.', 'error');
+        input.focus();
+        return;
+      }
+
+      // 2. Basic URL validation
+      if (!isValidUrl(rawUrl)) {
+        showMessage('❌ Invalid URL. Please enter a valid https:// link.', 'error');
+        input.focus();
+        return;
+      }
+
+      // 3. Detect type
+      const type = detectVideoType(rawUrl);
+      if (!type) {
+        showMessage('❌ Unsupported URL. Please use a YouTube, MP4, or other https:// video link.', 'error');
+        input.focus();
+        return;
+      }
+
+      // 4. Build embed URL
+      let embedUrl = rawUrl;
+      if (type === 'youtube') {
+        const ytEmbed = toYouTubeEmbed(rawUrl);
+        if (!ytEmbed) {
+          showMessage('❌ Could not parse YouTube video ID. Please check the URL.', 'error');
+          input.focus();
+          return;
+        }
+        embedUrl = ytEmbed;
+      }
+
+      // 5. Duplicate check (compare by embedUrl)
+      const duplicate = videos.find(v => v.embedUrl === embedUrl || v.url === rawUrl);
+      if (duplicate) {
+        showMessage('⚠️ This video has already been added to the gallery.', 'error');
+        input.focus();
+        return;
+      }
+
+      // 6. Build video object
+      const videoObj = {
+        id: `v_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        url: rawUrl,
+        embedUrl: embedUrl,
+        type: type,
+        addedAt: new Date().toISOString()
+      };
+
+      // 7. Add to array & persist
+      videos.push(videoObj);
+      saveVideos();
+
+      // 8. Render just the new card (append to grid)
+      appendVideoCard(videoObj);
+      updateEmptyState();
+
+      // 9. Clear input & show success
+      input.value = '';
+      showMessage('✅ Video added successfully!', 'success');
+      input.focus();
+    }
+
+    /* -----------------------------------------------
+       DELETE VIDEO
+    ----------------------------------------------- */
+    function deleteVideo(id) {
+      if (!isAdmin) return; // Extra guard
+
+      videos = videos.filter(v => v.id !== id);
+      saveVideos();
+
+      // Remove card from DOM with a fade-out
+      const card = document.getElementById(`card_${CSS.escape(id)}`);
+      if (card) {
+        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.92)';
+        setTimeout(() => {
+          card.remove();
+          updateEmptyState();
+        }, 300);
+      }
+    }
+
+    /* -----------------------------------------------
+       RENDER GALLERY — Full rebuild
+    ----------------------------------------------- */
+    function renderGallery() {
+      const grid = document.getElementById('videoGrid');
+      grid.innerHTML = '';
+
+      videos.forEach(video => {
+        const cardEl = buildCard(video);
+        grid.appendChild(cardEl);
+      });
+
+      updateEmptyState();
+    }
+
+    /* -----------------------------------------------
+       APPEND SINGLE CARD — For newly added video
+    ----------------------------------------------- */
+    function appendVideoCard(video) {
+      const grid = document.getElementById('videoGrid');
+      const cardEl = buildCard(video);
+      grid.appendChild(cardEl);
+    }
+
+    /* -----------------------------------------------
+       BUILD CARD ELEMENT
+    ----------------------------------------------- */
+    function buildCard(video) {
+      const card = document.createElement('article');
+      card.className = 'video-card';
+      card.id = `card_${video.id}`;
+      card.setAttribute('role', 'listitem');
+
+      // Build the embed HTML based on type
+      let embedHTML = '';
+      if (video.type === 'mp4') {
+        embedHTML = `
+          <video controls playsinline webkit-playsinline preload="metadata">
+            <source src="${escapeAttr(video.embedUrl)}" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>`;
+      } else {
+        // YouTube or generic iframe
+        embedHTML = `
+          <iframe
+            src="${escapeAttr(video.embedUrl)}"
+            title="Embedded video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>`;
+      }
+
+      // Shorten URL for display
+      const displayUrl = escapeHTML(
+        video.url.length > 45 ? video.url.slice(0, 42) + '…' : video.url
+      );
+
+      card.innerHTML = `
+        <div class="video-wrapper">
+          ${embedHTML}
+        </div>
+        <div class="card-footer">
+          <span class="card-url" title="${escapeAttr(video.url)}">${displayUrl}</span>
+          <button
+            class="delete-btn"
+            onclick="deleteVideo('${escapeAttr(video.id)}')"
+            title="Remove this video"
+            aria-label="Delete video"
+          >🗑 Delete</button>
+        </div>
+      `;
+
+      return card;
+    }
+
+    /* -----------------------------------------------
+       EMPTY STATE — Show/hide
+    ----------------------------------------------- */
+    function updateEmptyState() {
+      const emptyState = document.getElementById('emptyState');
+      const grid = document.getElementById('videoGrid');
+      if (videos.length === 0) {
+        emptyState.style.display = 'block';
+        grid.style.display = 'none';
+      } else {
+        emptyState.style.display = 'none';
+        grid.style.display = 'grid';
+      }
+    }
+
+    /* -----------------------------------------------
+       KEYBOARD SHORTCUT — Enter to Add Video
+    ----------------------------------------------- */
+    document.getElementById('videoUrlInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') addVideo();
+    });
+
+    /* -----------------------------------------------
+       ESCAPE KEY — Close modal
+    ----------------------------------------------- */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const overlay = document.getElementById('modalOverlay');
+        if (overlay.classList.contains('open')) closeLoginModal();
+      }
+    });
+
+    /* -----------------------------------------------
+       START
+    ----------------------------------------------- */
+    init();
+  </script>
+
+</body>
+</html>
